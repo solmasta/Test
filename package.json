@@ -4,17 +4,17 @@
   "description": "A simple URL shortener service built with Cloudflare Workers",
   "main": "worker.js",
   "scripts": {
-    "start": "wrangler dev",
-    "deploy": "wrangler publish"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "cloudflare",
-    "worker",
+    "workers",
     "url-shortener"
   ],
-  "author": "Test Repo",
+  "author": "Coding Assistant",
   "license": "MIT",
   "devDependencies": {
-    "wrangler": "^2.0.0"
+    "wrangler": "^3.0.0"
   }
 }
