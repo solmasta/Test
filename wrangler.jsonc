@@ -1,0 +1,18 @@
+{
+  "name": "url-shortener",
+  "main": "worker.js",
+  "compatibility_date": "2023-04-01",
+  "account_id": "your-account-id-here",
+  "workers_dev": true,
+  "route": {
+    "pattern": "your-domain.com/*",
+    "zone_id": "your-zone-id-here"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "URL_STORE",
+      "id": "your-kv-namespace-id-here",
+      "preview_id": "your-preview-kv-namespace-id-here"
+    }
+  ]
+}
