@@ -7,7 +7,11 @@
     "start": "wrangler dev",
     "deploy": "wrangler publish"
   },
-  "keywords": ["cloudflare", "worker", "url-shortener"],
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "url-shortener"
+  ],
   "author": "Test Repo",
   "license": "MIT",
   "devDependencies": {
