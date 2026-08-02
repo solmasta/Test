@@ -7,20 +7,24 @@ const {
   leaveCommunity,
 } = require('../controllers/communityController');
 const { protect } = require('../middleware/authMiddleware');
+const {
+  validateCreateCommunity,
+  validateMongoId
+} = require('../middleware/validators');
 
 const router = express.Router();
 
 router.route('/')
-  .post(protect, createCommunity)
+  .post(protect, validateCreateCommunity, createCommunity)
   .get(getAllCommunities);
 
 router.route('/:id')
-  .get(getCommunityById);
+  .get(validateMongoId, getCommunityById);
 
 router.route('/:id/join')
-  .post(protect, joinCommunity);
+  .post(protect, validateMongoId, joinCommunity);
 
 router.route('/:id/leave')
-  .delete(protect, leaveCommunity);
+  .delete(protect, validateMongoId, leaveCommunity);
 
 module.exports = router;

@@ -7,20 +7,24 @@ const {
   completeChallenge,
 } = require('../controllers/challengeController');
 const { protect } = require('../middleware/authMiddleware');
+const {
+  validateCreateChallenge,
+  validateMongoId
+} = require('../middleware/validators');
 
 const router = express.Router();
 
 router.route('/')
-  .post(protect, createChallenge)
+  .post(protect, validateCreateChallenge, createChallenge)
   .get(getAllChallenges);
 
 router.route('/:id')
-  .get(getChallengeById);
+  .get(validateMongoId, getChallengeById);
 
 router.route('/:id/join')
-  .post(protect, joinChallenge);
+  .post(protect, validateMongoId, joinChallenge);
 
 router.route('/:id/complete')
-  .put(protect, completeChallenge);
+  .put(protect, validateMongoId, completeChallenge);
 
 module.exports = router;

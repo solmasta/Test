@@ -6,14 +6,19 @@ const {
   updateUserProfile,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const {
+  validateRegister,
+  validateLogin,
+  validateUpdateProfile
+} = require('../middleware/validators');
 
 const router = express.Router();
 
-router.route('/').post(registerUser);
-router.route('/login').post(authUser);
+router.route('/').post(validateRegister, registerUser);
+router.route('/login').post(validateLogin, authUser);
 router
   .route('/profile')
   .get(protect, getUserProfile)
-  .put(protect, updateUserProfile);
+  .put(protect, validateUpdateProfile, updateUserProfile);
 
 module.exports = router;
