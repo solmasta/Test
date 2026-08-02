@@ -10,6 +10,7 @@ import Communities from './pages/Communities'
 import Challenges from './pages/Challenges'
 import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
 import './index.css'
 
 function App() {
@@ -41,6 +42,10 @@ function App() {
             <Route
               path="/profile"
               element={<ProtectedRoute><Profile /></ProtectedRoute>}
+            />
+            <Route
+              path="/admin"
+              element={<ProtectedRoute><Admin /></ProtectedRoute>}
             />
           </Route>
         </Routes>
