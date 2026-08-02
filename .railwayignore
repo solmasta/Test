@@ -1,0 +1,12 @@
+# Railway ignore file
+node_modules
+npm-debug.log
+.git
+.env
+.env.local
+.DS_Store
+dist
+build
+coverage
+tests
+*.log
