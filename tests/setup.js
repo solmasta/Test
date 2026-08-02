@@ -6,6 +6,12 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
 
 beforeAll(async () => {
   const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle-test';
+
+  // Disconnect any existing connections
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
   try {
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
@@ -19,7 +25,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (mongoose.connection.readyState === 1) {
-    await mongoose.connection.close();
+    await mongoose.disconnect();
   }
 });
 
