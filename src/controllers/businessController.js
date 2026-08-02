@@ -1,161 +1,126 @@
 const Business = require('../models/Business');
+const asyncHandler = require('../utils/asyncHandler');
+const { errors } = require('../utils/errorHandler');
 
-// Create a new business
-const createBusiness = async (req, res) => {
-  try {
-    const {
-      name,
-      description,
-      category,
-      address,
-      contact,
-      ecoCertifications,
-      sustainabilityPractices
-    } = req.body;
+const createBusiness = asyncHandler(async (req, res, next) => {
+  const {
+    name,
+    description,
+    category,
+    address,
+    contact,
+    ecoCertifications,
+    sustainabilityPractices
+  } = req.body;
 
-    // Create business
-    const business = await Business.create({
-      name,
-      description,
-      category,
-      address,
-      contact,
-      ecoCertifications,
-      sustainabilityPractices,
-      createdBy: req.user._id
-    });
+  const business = await Business.create({
+    name,
+    description,
+    category,
+    address,
+    contact,
+    ecoCertifications,
+    sustainabilityPractices,
+    createdBy: req.user._id
+  });
 
-    res.status(201).json(business);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  res.status(201).json(business);
+});
+
+const getAllBusinesses = asyncHandler(async (req, res, next) => {
+  const businesses = await Business.find({}).sort({ averageRating: -1 });
+  res.json(businesses);
+});
+
+const getBusinessById = asyncHandler(async (req, res, next) => {
+  const business = await Business.findById(req.params.id);
+
+  if (!business) {
+    return next(errors.notFound('Business'));
   }
-};
 
-// Get all businesses
-const getAllBusinesses = async (req, res) => {
-  try {
-    const businesses = await Business.find({})
-      .sort({ averageRating: -1 });
+  res.json(business);
+});
 
-    res.json(businesses);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+const updateBusiness = asyncHandler(async (req, res, next) => {
+  const business = await Business.findById(req.params.id);
+
+  if (!business) {
+    return next(errors.notFound('Business'));
   }
-};
 
-// Get a specific business
-const getBusinessById = async (req, res) => {
-  try {
-    const business = await Business.findById(req.params.id);
-
-    if (business) {
-      res.json(business);
-    } else {
-      res.status(404).json({ message: 'Business not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (business.createdBy.toString() !== req.user._id.toString()) {
+    return next(errors.unauthorized('You can only update your own businesses'));
   }
-};
 
-// Update a business
-const updateBusiness = async (req, res) => {
-  try {
-    const business = await Business.findById(req.params.id);
+  const {
+    name,
+    description,
+    category,
+    address,
+    contact,
+    ecoCertifications,
+    sustainabilityPractices
+  } = req.body;
 
-    if (business) {
-      // Check if user owns this business
-      if (business.createdBy.toString() !== req.user._id.toString()) {
-        return res.status(401).json({ message: 'Not authorized' });
-      }
+  business.name = name || business.name;
+  business.description = description || business.description;
+  business.category = category || business.category;
+  business.address = address || business.address;
+  business.contact = contact || business.contact;
+  business.ecoCertifications = ecoCertifications || business.ecoCertifications;
+  business.sustainabilityPractices = sustainabilityPractices || business.sustainabilityPractices;
 
-      const {
-        name,
-        description,
-        category,
-        address,
-        contact,
-        ecoCertifications,
-        sustainabilityPractices
-      } = req.body;
+  const updatedBusiness = await business.save();
+  res.json(updatedBusiness);
+});
 
-      business.name = name || business.name;
-      business.description = description || business.description;
-      business.category = category || business.category;
-      business.address = address || business.address;
-      business.contact = contact || business.contact;
-      business.ecoCertifications = ecoCertifications || business.ecoCertifications;
-      business.sustainabilityPractices = sustainabilityPractices || business.sustainabilityPractices;
+const deleteBusiness = asyncHandler(async (req, res, next) => {
+  const business = await Business.findById(req.params.id);
 
-      const updatedBusiness = await business.save();
-      res.json(updatedBusiness);
-    } else {
-      res.status(404).json({ message: 'Business not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (!business) {
+    return next(errors.notFound('Business'));
   }
-};
 
-// Delete a business
-const deleteBusiness = async (req, res) => {
-  try {
-    const business = await Business.findById(req.params.id);
-
-    if (business) {
-      // Check if user owns this business
-      if (business.createdBy.toString() !== req.user._id.toString()) {
-        return res.status(401).json({ message: 'Not authorized' });
-      }
-
-      await business.remove();
-      res.json({ message: 'Business removed' });
-    } else {
-      res.status(404).json({ message: 'Business not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (business.createdBy.toString() !== req.user._id.toString()) {
+    return next(errors.unauthorized('You can only delete your own businesses'));
   }
-};
 
-// Add a review to a business
-const addBusinessReview = async (req, res) => {
-  try {
-    const { rating, comment } = req.body;
-    const business = await Business.findById(req.params.id);
+  await business.deleteOne();
+  res.json({ message: 'Business removed successfully' });
+});
 
-    if (business) {
-      // Check if user has already reviewed this business
-      const alreadyReviewed = business.reviews.find(
-        review => review.user.toString() === req.user._id.toString()
-      );
+const addBusinessReview = asyncHandler(async (req, res, next) => {
+  const { rating, comment } = req.body;
+  const business = await Business.findById(req.params.id);
 
-      if (alreadyReviewed) {
-        return res.status(400).json({ message: 'Business already reviewed' });
-      }
-
-      const review = {
-        user: req.user._id,
-        rating: Number(rating),
-        comment
-      };
-
-      business.reviews.push(review);
-      
-      // Recalculate average rating
-      const totalRating = business.reviews.reduce((sum, review) => sum + review.rating, 0);
-      business.averageRating = totalRating / business.reviews.length;
-      business.totalReviews = business.reviews.length;
-
-      await business.save();
-      res.status(201).json({ message: 'Review added' });
-    } else {
-      res.status(404).json({ message: 'Business not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (!business) {
+    return next(errors.notFound('Business'));
   }
-};
+
+  const alreadyReviewed = business.reviews.find(
+    review => review.user.toString() === req.user._id.toString()
+  );
+
+  if (alreadyReviewed) {
+    return next(errors.conflict('You have already reviewed this business'));
+  }
+
+  const review = {
+    user: req.user._id,
+    rating: Number(rating),
+    comment
+  };
+
+  business.reviews.push(review);
+
+  const totalRating = business.reviews.reduce((sum, review) => sum + review.rating, 0);
+  business.averageRating = totalRating / business.reviews.length;
+  business.totalReviews = business.reviews.length;
+
+  await business.save();
+  res.status(201).json({ message: 'Review added successfully' });
+});
 
 module.exports = {
   createBusiness,

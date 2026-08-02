@@ -49,6 +49,19 @@ app.use('/api/communities', communityRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/challenges', challengeRoutes);
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    status: 404,
+    message: 'Endpoint not found'
+  });
+});
+
+// Global error handler (must be last)
+const errorHandler = require('./src/middleware/errorHandler');
+app.use(errorHandler);
+
 // Connect to MongoDB (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {
   mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
@@ -62,16 +75,6 @@ if (process.env.NODE_ENV !== 'test') {
     console.error('MongoDB connection error:', error);
   });
 }
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode);
-  res.json({
-    message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-  });
-});
 
 // Start server
 app.listen(PORT, () => {
