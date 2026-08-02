@@ -63,4 +63,10 @@ communitySchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
+// Indexes for performance
+communitySchema.index({ name: 'text', description: 'text', location: 'text' });
+communitySchema.index({ location: 1 });
+communitySchema.index({ createdAt: -1 });
+communitySchema.index({ 'members.user': 1 });
+
 module.exports = mongoose.model('Community', communitySchema);

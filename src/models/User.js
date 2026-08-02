@@ -94,4 +94,10 @@ userSchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
+// Indexes for performance
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ ecoScore: -1 });
+userSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('User', userSchema);

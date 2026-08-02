@@ -100,4 +100,12 @@ challengeSchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
+// Indexes for performance
+challengeSchema.index({ title: 'text', description: 'text' });
+challengeSchema.index({ category: 1 });
+challengeSchema.index({ difficulty: 1 });
+challengeSchema.index({ isActive: 1 });
+challengeSchema.index({ createdAt: -1 });
+challengeSchema.index({ 'participants.user': 1 });
+
 module.exports = mongoose.model('Challenge', challengeSchema);

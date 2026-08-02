@@ -60,4 +60,10 @@ wasteLogSchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
+// Indexes for performance
+wasteLogSchema.index({ user: 1, date: -1 });
+wasteLogSchema.index({ category: 1 });
+wasteLogSchema.index({ createdAt: -1 });
+wasteLogSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model('WasteLog', wasteLogSchema);

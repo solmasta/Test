@@ -54,6 +54,7 @@ const wasteLogRoutes = require('./src/routes/wasteLogRoutes');
 const communityRoutes = require('./src/routes/communityRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const challengeRoutes = require('./src/routes/challengeRoutes');
+const statsRoutes = require('./src/routes/statsRoutes');
 
 // Import rate limiters
 const { apiLimiter, authLimiter, createAccountLimiter, reviewLimiter } = require('./src/middleware/rateLimiter');
@@ -68,6 +69,7 @@ app.use('/api/waste-logs', wasteLogRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/stats', statsRoutes);
 
 // 404 handler
 app.use((req, res) => {

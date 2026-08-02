@@ -2,6 +2,7 @@ const Business = require('../models/Business');
 const asyncHandler = require('../utils/asyncHandler');
 const { errors } = require('../utils/errorHandler');
 const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
+const { buildSearchFilter, buildCategoryFilter, buildRatingFilter, buildSortOption } = require('../utils/searchFilter');
 
 const createBusiness = asyncHandler(async (req, res, next) => {
   const {
@@ -30,13 +31,21 @@ const createBusiness = asyncHandler(async (req, res, next) => {
 
 const getAllBusinesses = asyncHandler(async (req, res, next) => {
   const { page, limit, skip } = getPaginationParams(req);
+  const { q, category, minRating, sort } = req.query;
+
+  const filter = {};
+  Object.assign(filter, buildSearchFilter(q, ['name', 'description']));
+  Object.assign(filter, buildCategoryFilter(category));
+  Object.assign(filter, buildRatingFilter(minRating));
+
+  const sortOption = buildSortOption(sort || 'most-rated');
 
   const [businesses, total] = await Promise.all([
-    Business.find({})
+    Business.find(filter)
       .skip(skip)
       .limit(limit)
-      .sort({ averageRating: -1 }),
-    Business.countDocuments({})
+      .sort(sortOption),
+    Business.countDocuments(filter)
   ]);
 
   res.json(paginatedResponse(businesses, page, limit, total));

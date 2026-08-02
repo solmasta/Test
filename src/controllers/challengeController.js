@@ -2,6 +2,7 @@ const Challenge = require('../models/Challenge');
 const asyncHandler = require('../utils/asyncHandler');
 const { errors } = require('../utils/errorHandler');
 const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
+const { buildSearchFilter, buildCategoryFilter, buildDifficultyFilter, buildSortOption } = require('../utils/searchFilter');
 
 const createChallenge = asyncHandler(async (req, res, next) => {
   const {
@@ -28,14 +29,22 @@ const createChallenge = asyncHandler(async (req, res, next) => {
 
 const getAllChallenges = asyncHandler(async (req, res, next) => {
   const { page, limit, skip } = getPaginationParams(req);
+  const { q, category, difficulty, sort } = req.query;
+
+  const filter = { isActive: true };
+  Object.assign(filter, buildSearchFilter(q, ['title', 'description']));
+  Object.assign(filter, buildCategoryFilter(category));
+  Object.assign(filter, buildDifficultyFilter(difficulty));
+
+  const sortOption = buildSortOption(sort || 'newest');
 
   const [challenges, total] = await Promise.all([
-    Challenge.find({ isActive: true })
+    Challenge.find(filter)
       .populate('createdBy', 'username')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 }),
-    Challenge.countDocuments({ isActive: true })
+      .sort(sortOption),
+    Challenge.countDocuments(filter)
   ]);
 
   res.json(paginatedResponse(challenges, page, limit, total));

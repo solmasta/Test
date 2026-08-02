@@ -126,4 +126,11 @@ businessSchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
+// Indexes for performance
+businessSchema.index({ name: 'text', description: 'text' });
+businessSchema.index({ category: 1 });
+businessSchema.index({ 'address.city': 1 });
+businessSchema.index({ averageRating: -1, totalReviews: -1 });
+businessSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Business', businessSchema);
