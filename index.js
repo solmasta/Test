@@ -35,6 +35,20 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Import route files
+const userRoutes = require('./src/routes/userRoutes');
+const wasteLogRoutes = require('./src/routes/wasteLogRoutes');
+const communityRoutes = require('./src/routes/communityRoutes');
+const businessRoutes = require('./src/routes/businessRoutes');
+const challengeRoutes = require('./src/routes/challengeRoutes');
+
+// Connect routes
+app.use('/api/users', userRoutes);
+app.use('/api/waste-logs', wasteLogRoutes);
+app.use('/api/communities', communityRoutes);
+app.use('/api/businesses', businessRoutes);
+app.use('/api/challenges', challengeRoutes);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
   useNewUrlParser: true,
@@ -45,6 +59,16 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle'
 })
 .catch((error) => {
   console.error('MongoDB connection error:', error);
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode);
+  res.json({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+  });
 });
 
 // Start server
