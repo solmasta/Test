@@ -46,7 +46,15 @@ const wasteLogSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
+// Update timestamp on save
+wasteLogSchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
+// Update timestamp on findOneAndUpdate
 wasteLogSchema.pre('findOneAndUpdate', function(next) {
   this.set({ updatedAt: new Date() });
   next();

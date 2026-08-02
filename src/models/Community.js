@@ -49,7 +49,15 @@ const communitySchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
+// Update timestamp on save
+communitySchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
+// Update timestamp on findOneAndUpdate
 communitySchema.pre('findOneAndUpdate', function(next) {
   this.set({ updatedAt: new Date() });
   next();

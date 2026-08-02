@@ -102,9 +102,11 @@ const businessSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
-businessSchema.pre('findOneAndUpdate', function(next) {
-  this.set({ updatedAt: new Date() });
+// Update timestamp on save
+businessSchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
   next();
 });
 
@@ -115,6 +117,12 @@ businessSchema.pre('save', function(next) {
     this.averageRating = totalRating / this.reviews.length;
     this.totalReviews = this.reviews.length;
   }
+  next();
+});
+
+// Update timestamp on findOneAndUpdate
+businessSchema.pre('findOneAndUpdate', function(next) {
+  this.set({ updatedAt: new Date() });
   next();
 });
 

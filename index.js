@@ -4,7 +4,10 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocs = require('./src/swagger');
 const validateEnv = require('./src/utils/validateEnv');
+const requestLogger = require('./src/middleware/requestLogger');
 
 // Load environment variables
 dotenv.config();
@@ -19,8 +22,14 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors()); // Cross-origin resource sharing
-app.use(morgan('combined')); // Logging
+app.use(morgan('combined')); // HTTP logging
+app.use(requestLogger); // Request ID and structured logging
 app.use(express.json()); // Parse JSON bodies
+
+// Swagger documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  customCss: '.swagger-ui .topbar { display: none }'
+}));
 
 // Routes
 app.get('/', (req, res) => {
