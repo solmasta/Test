@@ -4,9 +4,13 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const validateEnv = require('./src/utils/validateEnv');
 
 // Load environment variables
 dotenv.config();
+
+// Validate required environment variables
+validateEnv();
 
 // Create Express server
 const app = express();
@@ -42,8 +46,15 @@ const communityRoutes = require('./src/routes/communityRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const challengeRoutes = require('./src/routes/challengeRoutes');
 
-// Connect routes
-app.use('/api/users', userRoutes);
+// Import rate limiters
+const { apiLimiter, authLimiter, createAccountLimiter, reviewLimiter } = require('./src/middleware/rateLimiter');
+
+// Apply general API rate limiter to all routes
+app.use('/api/', apiLimiter);
+
+// Connect routes with specific rate limiters
+app.use('/api/users/login', authLimiter);
+app.use('/api/users', createAccountLimiter, userRoutes);
 app.use('/api/waste-logs', wasteLogRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/businesses', businessRoutes);

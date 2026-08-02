@@ -2,6 +2,7 @@ const WasteLog = require('../models/WasteLog');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { errors } = require('../utils/errorHandler');
+const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
 
 const createWasteLog = asyncHandler(async (req, res, next) => {
   const { category, amount, unit, description } = req.body;
@@ -28,8 +29,17 @@ const createWasteLog = asyncHandler(async (req, res, next) => {
 });
 
 const getUserWasteLogs = asyncHandler(async (req, res, next) => {
-  const wasteLogs = await WasteLog.find({ user: req.user._id }).sort({ date: -1 });
-  res.json(wasteLogs);
+  const { page, limit, skip } = getPaginationParams(req);
+
+  const [wasteLogs, total] = await Promise.all([
+    WasteLog.find({ user: req.user._id })
+      .skip(skip)
+      .limit(limit)
+      .sort({ date: -1 }),
+    WasteLog.countDocuments({ user: req.user._id })
+  ]);
+
+  res.json(paginatedResponse(wasteLogs, page, limit, total));
 });
 
 const getWasteLogById = asyncHandler(async (req, res, next) => {

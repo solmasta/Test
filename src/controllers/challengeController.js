@@ -1,6 +1,7 @@
 const Challenge = require('../models/Challenge');
 const asyncHandler = require('../utils/asyncHandler');
 const { errors } = require('../utils/errorHandler');
+const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
 
 const createChallenge = asyncHandler(async (req, res, next) => {
   const {
@@ -26,10 +27,18 @@ const createChallenge = asyncHandler(async (req, res, next) => {
 });
 
 const getAllChallenges = asyncHandler(async (req, res, next) => {
-  const challenges = await Challenge.find({ isActive: true })
-    .populate('createdBy', 'username');
+  const { page, limit, skip } = getPaginationParams(req);
 
-  res.json(challenges);
+  const [challenges, total] = await Promise.all([
+    Challenge.find({ isActive: true })
+      .populate('createdBy', 'username')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    Challenge.countDocuments({ isActive: true })
+  ]);
+
+  res.json(paginatedResponse(challenges, page, limit, total));
 });
 
 const getChallengeById = asyncHandler(async (req, res, next) => {

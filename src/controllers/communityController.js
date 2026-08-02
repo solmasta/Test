@@ -2,6 +2,7 @@ const Community = require('../models/Community');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { errors } = require('../utils/errorHandler');
+const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
 
 const createCommunity = asyncHandler(async (req, res, next) => {
   const { name, description, location } = req.body;
@@ -29,11 +30,19 @@ const createCommunity = asyncHandler(async (req, res, next) => {
 });
 
 const getAllCommunities = asyncHandler(async (req, res, next) => {
-  const communities = await Community.find({})
-    .populate('members.user', 'username profile.firstName profile.lastName')
-    .populate('posts');
+  const { page, limit, skip } = getPaginationParams(req);
 
-  res.json(communities);
+  const [communities, total] = await Promise.all([
+    Community.find({})
+      .populate('members.user', 'username profile.firstName profile.lastName')
+      .populate('posts')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    Community.countDocuments({})
+  ]);
+
+  res.json(paginatedResponse(communities, page, limit, total));
 });
 
 const getCommunityById = asyncHandler(async (req, res, next) => {
