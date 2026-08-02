@@ -8,19 +8,24 @@ const {
   addBusinessReview,
 } = require('../controllers/businessController');
 const { protect } = require('../middleware/authMiddleware');
+const {
+  validateCreateBusiness,
+  validateBusinessReview,
+  validateMongoId
+} = require('../middleware/validators');
 
 const router = express.Router();
 
 router.route('/')
-  .post(protect, createBusiness)
+  .post(protect, validateCreateBusiness, createBusiness)
   .get(getAllBusinesses);
 
 router.route('/:id')
-  .get(getBusinessById)
-  .put(protect, updateBusiness)
-  .delete(protect, deleteBusiness);
+  .get(validateMongoId, getBusinessById)
+  .put(protect, validateMongoId, validateCreateBusiness, updateBusiness)
+  .delete(protect, validateMongoId, deleteBusiness);
 
 router.route('/:id/reviews')
-  .post(protect, addBusinessReview);
+  .post(protect, validateMongoId, validateBusinessReview, addBusinessReview);
 
 module.exports = router;

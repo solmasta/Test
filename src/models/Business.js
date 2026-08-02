@@ -102,9 +102,11 @@ const businessSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
-businessSchema.pre('findOneAndUpdate', function(next) {
-  this.set({ updatedAt: new Date() });
+// Update timestamp on save
+businessSchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
   next();
 });
 
@@ -117,5 +119,18 @@ businessSchema.pre('save', function(next) {
   }
   next();
 });
+
+// Update timestamp on findOneAndUpdate
+businessSchema.pre('findOneAndUpdate', function(next) {
+  this.set({ updatedAt: new Date() });
+  next();
+});
+
+// Indexes for performance
+businessSchema.index({ name: 'text', description: 'text' });
+businessSchema.index({ category: 1 });
+businessSchema.index({ 'address.city': 1 });
+businessSchema.index({ averageRating: -1, totalReviews: -1 });
+businessSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Business', businessSchema);

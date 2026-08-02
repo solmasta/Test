@@ -46,10 +46,24 @@ const wasteLogSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
+// Update timestamp on save
+wasteLogSchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
+// Update timestamp on findOneAndUpdate
 wasteLogSchema.pre('findOneAndUpdate', function(next) {
   this.set({ updatedAt: new Date() });
   next();
 });
+
+// Indexes for performance
+wasteLogSchema.index({ user: 1, date: -1 });
+wasteLogSchema.index({ category: 1 });
+wasteLogSchema.index({ createdAt: -1 });
+wasteLogSchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model('WasteLog', wasteLogSchema);

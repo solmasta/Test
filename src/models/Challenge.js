@@ -77,6 +77,14 @@ const challengeSchema = new mongoose.Schema({
   }
 });
 
+// Update timestamp on save
+challengeSchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
 // Set end date based on duration
 challengeSchema.pre('save', function(next) {
   if (this.duration && !this.endDate) {
@@ -86,10 +94,18 @@ challengeSchema.pre('save', function(next) {
   next();
 });
 
-// Update timestamp on update
+// Update timestamp on findOneAndUpdate
 challengeSchema.pre('findOneAndUpdate', function(next) {
   this.set({ updatedAt: new Date() });
   next();
 });
+
+// Indexes for performance
+challengeSchema.index({ title: 'text', description: 'text' });
+challengeSchema.index({ category: 1 });
+challengeSchema.index({ difficulty: 1 });
+challengeSchema.index({ isActive: 1 });
+challengeSchema.index({ createdAt: -1 });
+challengeSchema.index({ 'participants.user': 1 });
 
 module.exports = mongoose.model('Challenge', challengeSchema);

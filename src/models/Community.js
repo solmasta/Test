@@ -49,10 +49,24 @@ const communitySchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on update
+// Update timestamp on save
+communitySchema.pre('save', function(next) {
+  if (!this.isNew) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
+
+// Update timestamp on findOneAndUpdate
 communitySchema.pre('findOneAndUpdate', function(next) {
   this.set({ updatedAt: new Date() });
   next();
 });
+
+// Indexes for performance
+communitySchema.index({ name: 'text', description: 'text', location: 'text' });
+communitySchema.index({ location: 1 });
+communitySchema.index({ createdAt: -1 });
+communitySchema.index({ 'members.user': 1 });
 
 module.exports = mongoose.model('Community', communitySchema);

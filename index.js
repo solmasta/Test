@@ -4,9 +4,16 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocs = require('./src/swagger');
+const validateEnv = require('./src/utils/validateEnv');
+const requestLogger = require('./src/middleware/requestLogger');
 
 // Load environment variables
 dotenv.config();
+
+// Validate required environment variables
+validateEnv();
 
 // Create Express server
 const app = express();
@@ -15,8 +22,14 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors()); // Cross-origin resource sharing
-app.use(morgan('combined')); // Logging
+app.use(morgan('combined')); // HTTP logging
+app.use(requestLogger); // Request ID and structured logging
 app.use(express.json()); // Parse JSON bodies
+
+// Swagger documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  customCss: '.swagger-ui .topbar { display: none }'
+}));
 
 // Routes
 app.get('/', (req, res) => {
@@ -41,35 +54,49 @@ const wasteLogRoutes = require('./src/routes/wasteLogRoutes');
 const communityRoutes = require('./src/routes/communityRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const challengeRoutes = require('./src/routes/challengeRoutes');
+const statsRoutes = require('./src/routes/statsRoutes');
 
-// Connect routes
-app.use('/api/users', userRoutes);
+// Import rate limiters
+const { apiLimiter, authLimiter, createAccountLimiter, reviewLimiter } = require('./src/middleware/rateLimiter');
+
+// Apply general API rate limiter to all routes
+app.use('/api/', apiLimiter);
+
+// Connect routes with specific rate limiters
+app.use('/api/users/login', authLimiter);
+app.use('/api/users', createAccountLimiter, userRoutes);
 app.use('/api/waste-logs', wasteLogRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/stats', statsRoutes);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-})
-.catch((error) => {
-  console.error('MongoDB connection error:', error);
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode);
-  res.json({
-    message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    status: 404,
+    message: 'Endpoint not found'
   });
 });
+
+// Global error handler (must be last)
+const errorHandler = require('./src/middleware/errorHandler');
+app.use(errorHandler);
+
+// Connect to MongoDB (skip in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+  });
+}
 
 // Start server
 app.listen(PORT, () => {

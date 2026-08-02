@@ -1,125 +1,115 @@
 const Challenge = require('../models/Challenge');
+const asyncHandler = require('../utils/asyncHandler');
+const { errors } = require('../utils/errorHandler');
+const { getPaginationParams, paginatedResponse } = require('../utils/pagination');
+const { buildSearchFilter, buildCategoryFilter, buildDifficultyFilter, buildSortOption } = require('../utils/searchFilter');
 
-// Create a new challenge
-const createChallenge = async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      category,
-      difficulty,
-      points,
-      duration
-    } = req.body;
+const createChallenge = asyncHandler(async (req, res, next) => {
+  const {
+    title,
+    description,
+    category,
+    difficulty,
+    points,
+    duration
+  } = req.body;
 
-    // Create challenge
-    const challenge = await Challenge.create({
-      title,
-      description,
-      category,
-      difficulty,
-      points,
-      duration,
-      createdBy: req.user._id
-    });
+  const challenge = await Challenge.create({
+    title,
+    description,
+    category,
+    difficulty,
+    points,
+    duration,
+    createdBy: req.user._id
+  });
 
-    res.status(201).json(challenge);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+  res.status(201).json(challenge);
+});
 
-// Get all challenges
-const getAllChallenges = async (req, res) => {
-  try {
-    const challenges = await Challenge.find({ isActive: true })
-      .populate('createdBy', 'username');
+const getAllChallenges = asyncHandler(async (req, res, next) => {
+  const { page, limit, skip } = getPaginationParams(req);
+  const { q, category, difficulty, sort } = req.query;
 
-    res.json(challenges);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+  const filter = { isActive: true };
+  Object.assign(filter, buildSearchFilter(q, ['title', 'description']));
+  Object.assign(filter, buildCategoryFilter(category));
+  Object.assign(filter, buildDifficultyFilter(difficulty));
 
-// Get a specific challenge
-const getChallengeById = async (req, res) => {
-  try {
-    const challenge = await Challenge.findById(req.params.id)
+  const sortOption = buildSortOption(sort || 'newest');
+
+  const [challenges, total] = await Promise.all([
+    Challenge.find(filter)
       .populate('createdBy', 'username')
-      .populate('participants.user', 'username');
+      .skip(skip)
+      .limit(limit)
+      .sort(sortOption),
+    Challenge.countDocuments(filter)
+  ]);
 
-    if (challenge) {
-      res.json(challenge);
-    } else {
-      res.status(404).json({ message: 'Challenge not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  res.json(paginatedResponse(challenges, page, limit, total));
+});
+
+const getChallengeById = asyncHandler(async (req, res, next) => {
+  const challenge = await Challenge.findById(req.params.id)
+    .populate('createdBy', 'username')
+    .populate('participants.user', 'username');
+
+  if (!challenge) {
+    return next(errors.notFound('Challenge'));
   }
-};
 
-// Join a challenge
-const joinChallenge = async (req, res) => {
-  try {
-    const challenge = await Challenge.findById(req.params.id);
+  res.json(challenge);
+});
 
-    if (challenge) {
-      // Check if user is already a participant
-      const isParticipant = challenge.participants.some(
-        participant => participant.user.toString() === req.user._id.toString()
-      );
+const joinChallenge = asyncHandler(async (req, res, next) => {
+  const challenge = await Challenge.findById(req.params.id);
 
-      if (isParticipant) {
-        return res.status(400).json({ message: 'Already a participant' });
-      }
-
-      // Add user to challenge
-      challenge.participants.push({
-        user: req.user._id
-      });
-
-      const updatedChallenge = await challenge.save();
-      res.json(updatedChallenge);
-    } else {
-      res.status(404).json({ message: 'Challenge not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (!challenge) {
+    return next(errors.notFound('Challenge'));
   }
-};
 
-// Complete a challenge
-const completeChallenge = async (req, res) => {
-  try {
-    const challenge = await Challenge.findById(req.params.id);
+  const isParticipant = challenge.participants.some(
+    participant => participant.user.toString() === req.user._id.toString()
+  );
 
-    if (challenge) {
-      // Find participant
-      const participant = challenge.participants.find(
-        p => p.user.toString() === req.user._id.toString()
-      );
-
-      if (!participant) {
-        return res.status(400).json({ message: 'Not a participant' });
-      }
-
-      if (participant.completed) {
-        return res.status(400).json({ message: 'Challenge already completed' });
-      }
-
-      // Mark as completed
-      participant.completed = true;
-      participant.completedAt = Date.now();
-
-      const updatedChallenge = await challenge.save();
-      res.json(updatedChallenge);
-    } else {
-      res.status(404).json({ message: 'Challenge not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (isParticipant) {
+    return next(errors.conflict('You are already a participant in this challenge'));
   }
-};
+
+  challenge.participants.push({
+    user: req.user._id
+  });
+
+  const updatedChallenge = await challenge.save();
+  res.json(updatedChallenge);
+});
+
+const completeChallenge = asyncHandler(async (req, res, next) => {
+  const challenge = await Challenge.findById(req.params.id);
+
+  if (!challenge) {
+    return next(errors.notFound('Challenge'));
+  }
+
+  const participant = challenge.participants.find(
+    p => p.user.toString() === req.user._id.toString()
+  );
+
+  if (!participant) {
+    return next(errors.conflict('You are not a participant in this challenge'));
+  }
+
+  if (participant.completed) {
+    return next(errors.conflict('You have already completed this challenge'));
+  }
+
+  participant.completed = true;
+  participant.completedAt = Date.now();
+
+  const updatedChallenge = await challenge.save();
+  res.json(updatedChallenge);
+});
 
 module.exports = {
   createChallenge,
