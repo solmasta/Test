@@ -1,6 +1,13 @@
-const { v4: uuidv4 } = require('uuid');
+let uuidv4Promise;
+const getUuidv4 = () => {
+  if (!uuidv4Promise) {
+    uuidv4Promise = import('uuid').then((mod) => mod.v4);
+  }
+  return uuidv4Promise;
+};
 
-const requestLogger = (req, res, next) => {
+const requestLogger = async (req, res, next) => {
+  const uuidv4 = await getUuidv4();
   req.id = req.headers['x-request-id'] || uuidv4();
   req.startTime = Date.now();
 
