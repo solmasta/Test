@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./src/swagger');
 const validateEnv = require('./src/utils/validateEnv');
@@ -71,7 +72,33 @@ app.use('/api/businesses', businessRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/stats', statsRoutes);
 
-// 404 handler
+// Serve static files (frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  // Don't fallback for API routes (handled above)
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      success: false,
+      status: 404,
+      message: 'API endpoint not found'
+    });
+  }
+  // Serve index.html for SPA routing
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'File not found'
+      });
+    }
+  });
+});
+
+// 404 handler (fallback)
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -86,15 +113,18 @@ app.use(errorHandler);
 
 // Connect to MongoDB (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle';
+  mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('✓ Connected to MongoDB');
   })
   .catch((error) => {
-    console.error('MongoDB connection error:', error);
+    console.warn('⚠️ MongoDB connection warning (app will run without DB):', error.message);
+    // Don't crash the app if MongoDB isn't available
+    // This allows the app to serve the frontend even without a DB
   });
 }
 
