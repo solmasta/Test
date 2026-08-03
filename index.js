@@ -113,15 +113,18 @@ app.use(errorHandler);
 
 // Connect to MongoDB (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle', {
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecocycle';
+  mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('✓ Connected to MongoDB');
   })
   .catch((error) => {
-    console.error('MongoDB connection error:', error);
+    console.warn('⚠️ MongoDB connection warning (app will run without DB):', error.message);
+    // Don't crash the app if MongoDB isn't available
+    // This allows the app to serve the frontend even without a DB
   });
 }
 
