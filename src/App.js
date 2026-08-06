@@ -1,6 +1,7 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { useAppState, useUserState, usePreferences } from './state_selectors';
 import { StateContext } from './state_manager';
+import { StateManager } from './state_manager';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 
@@ -8,7 +9,7 @@ import './App.css';
 /* 4. Main App component – shows how to use the hooks */
 /* ---------------------------------------------- */
 const MainContent = () => {
-  const { safeUpdateState } = useContext(StateContext);
+  const { safeUpdateState } = React.useContext(StateContext);
   const user = useUserState();
   const preferences = usePreferences();
 
@@ -78,17 +79,13 @@ const App = () => {
   };
 
   return (
-    <StateContext.Provider value={{ state: initialState, safeUpdateState: () => {}, error: null }}>
+    <StateManager initialState={initialState}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={
-            <StateContext.Provider value={{ state: initialState, safeUpdateState: () => {}, error: null }}>
-              <MainContent />
-            </StateContext.Provider>
-          } />
+          <Route path="/" element={<MainContent />} />
         </Routes>
       </BrowserRouter>
-    </StateContext.Provider>
+    </StateManager>
   );
 };
 
