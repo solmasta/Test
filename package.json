@@ -1,60 +1,42 @@
 {
-  "name": "ecocycle",
-  "version": "1.0.0",
-  "description": "A platform for individuals, communities, and businesses to reduce waste, conserve resources, and promote eco-friendly practices.",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "jest --detectOpenHandles",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "seed": "node scripts/seed.js"
-  },
-  "keywords": [
-    "ecology",
-    "sustainability",
-    "waste-reduction",
-    "environment"
-  ],
-  "author": "EcoCycle Team",
-  "license": "MIT",
+  "name": "test",
+  "version": "0.1.0",
+  "homepage": "https://solmasta.github.io/Test",
+  "private": true,
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^8.6.1",
-    "express-validator": "^7.3.2",
-    "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.5.0",
-    "morgan": "^1.10.0",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1",
-    "uuid": "^14.0.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "react-scripts": "5.0.1",
+    "zod": "^3.22.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "devDependencies": {
-    "jest": "^29.6.2",
-    "nodemon": "^3.0.1",
-    "supertest": "^6.3.3"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.js",
-      "!src/models/**"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 50,
-        "functions": 50,
-        "lines": 50,
-        "statements": 50
-      }
-    }
+    "gh-pages": "^5.0.0"
   }
 }
