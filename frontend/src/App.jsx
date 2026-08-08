@@ -1,76 +1,61 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import { StateManager } from './state_manager'
-import Layout from './components/Layout'
-import ProtectedRoute from './components/ProtectedRoute'
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Header from './components/Header'
 import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Communities from './pages/Communities'
 import Challenges from './pages/Challenges'
 import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
-import Admin from './pages/Admin'
-import './index.css'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import './App.css'
 
 function App() {
-  const initialState = {
-    user: {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      name: 'Guest',
-      email: '',
-      avatar: '',
-      bio: ''
-    },
-    preferences: {
-      theme: 'light',
-      fontSize: 'medium',
-      animations: true,
-      quantumMode: false
-    },
-    version: 1
-  };
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('ecocycle_user')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
+    setLoading(false)
+  }, [])
+
+  const login = (userData) => {
+    setUser(userData)
+    localStorage.setItem('ecocycle_user', JSON.stringify(userData))
+  }
+
+  const logout = () => {
+    setUser(null)
+    localStorage.removeItem('ecocycle_user')
+  }
+
+  if (loading) {
+    return <div className="loading">Loading...</div>
+  }
 
   return (
-    <StateManager initialState={initialState}>
-      <BrowserRouter>
-        <AuthProvider>
+    <BrowserRouter>
+      <div className="app">
+        <Header user={user} onLogout={logout} />
+        <main>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-
-            <Route element={<Layout />}>
-              <Route
-                path="/dashboard"
-                element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-              />
-              <Route
-                path="/communities"
-                element={<ProtectedRoute><Communities /></ProtectedRoute>}
-              />
-              <Route
-                path="/challenges"
-                element={<ProtectedRoute><Challenges /></ProtectedRoute>}
-              />
-              <Route
-                path="/leaderboard"
-                element={<ProtectedRoute><Leaderboard /></ProtectedRoute>}
-              />
-              <Route
-                path="/profile"
-                element={<ProtectedRoute><Profile /></ProtectedRoute>}
-              />
-              <Route
-                path="/admin"
-                element={<ProtectedRoute><Admin /></ProtectedRoute>}
-              />
-            </Route>
+            <Route path="/" element={<Home user={user} />} />
+            <Route path="/dashboard" element={<Dashboard user={user} />} />
+            <Route path="/communities" element={<Communities user={user} />} />
+            <Route path="/challenges" element={<Challenges user={user} />} />
+            <Route path="/leaderboard" element={<Leaderboard user={user} />} />
+            <Route path="/profile" element={<Profile user={user} onLogin={login} />} />
+            <Route path="/login" element={<Login onLogin={login} />} />
+            <Route path="/register" element={<Register onLogin={login} />} />
           </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </StateManager>
+        </main>
+      </div>
+    </BrowserRouter>
   )
 }
 
